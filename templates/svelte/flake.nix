@@ -1,22 +1,23 @@
 {
+  description = "Description for the project";
+
   inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = inputs:
-    inputs.flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = (import (inputs.nixpkgs) { inherit system; });
-      in {
-        devShell = pkgs.mkShell {
-          buildInputs=[
-            pkgs.nodejs_22
-            pkgs.nodePackages.pnpm
-            pkgs.nodePackages.typescript
-            pkgs.nodePackages.typescript-language-server
+  outputs = inputs @ {flake-parts, ...}:
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
+      perSystem = {pkgs, ...}: {
+        devShells.default = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            nodejs_22
+            pnpm
+            typescript
+            typescript-language-server
           ];
         };
-      }
-    );
+      };
+    };
 }

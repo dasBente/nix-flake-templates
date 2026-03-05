@@ -1,24 +1,16 @@
 {
-  description = "A very basic flake";
+  description = "Description for the project";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
   outputs = inputs @ {flake-parts, ...}:
-    flake-parts.lib.mkFlake {inherit inputs;}
-    (top @ {
-      config,
-      withSystem,
-      moduleWithSystem,
-      ...
-    }: {
-      systems = ["x86_64-linux"];
-
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
       perSystem = {
         self',
-        config,
         pkgs,
         ...
       }: {
@@ -27,14 +19,12 @@
         '';
 
         devShells.default = pkgs.mkShell {
-          packages = [
-            config.packages.godot-wrapped
-          ];
+          packages = [self'.packages.godot-wrapped];
           nativeBuildInputs = with pkgs; [
             mono
             godot-mono
           ];
         };
       };
-    });
+    };
 }
