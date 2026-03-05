@@ -1,20 +1,15 @@
 {
   description = "My own templates";
 
-  outputs = {self}: {
-    templates = {
-      svelte = {
-        path = ./templates/svelte;
-        description = "Minimal Svelte with Typescript.";
-      };
-      quickshell = {
-        path = ./templates/quickshell;
-        description = "Quickshell project template.";
-      };
-      flake-parts = {
-        path = ./templates/flake-parts;
-        description = "Empty flake using flake-parts and dendritic modules";
-      };
-    };
+  outputs = {self}: let
+    templates = builtins.mapAttrs (name: _: {
+      path = ./templates/${name};
+      description = let
+        flake = import ./templates/${name}/flake.nix;
+      in
+        flake.description or "${name} template";
+    }) (builtins.readDir ./templates);
+  in {
+    inherit templates;
   };
 }
