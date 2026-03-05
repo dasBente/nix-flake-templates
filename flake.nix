@@ -24,6 +24,24 @@
     inputs @ {flake-parts, ...}:
       flake-parts.lib.mkFlake {inherit inputs;} {
         systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
-        flake = {inherit templates;};
+        flake = {pkgs, ...}: {
+          inherit templates;
+
+          packages.default = pkgs.writeShellScript "init-template" ''
+            set -e
+
+            templates="${builtins.concatStringsSep "\n" (builtins.attrNames template-dirs)}"
+            selected=$(echo "$templates" | ${pkgs.fzf}/bin/fzf \
+                --preview 'cat "${./templates}/{}/flake.nix" 2>/dev/null | head -20')
+
+            if [ -z "$selected" ]; then;
+                echo "No template selected"
+                exit 1
+            fi
+
+            echo "Initializing template: $selected"
+            nix flake init -t "github:dasbente/nix-flake-templates#$selected"
+          '';
+        };
       };
 }
