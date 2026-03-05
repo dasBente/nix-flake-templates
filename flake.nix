@@ -24,9 +24,10 @@
     inputs @ {flake-parts, ...}:
       flake-parts.lib.mkFlake {inherit inputs;} {
         systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
-        flake = {pkgs, ...}: {
+        flake = {
           inherit templates;
-
+        };
+        perSystem = {pkgs, ...}: {
           packages.default = pkgs.writeShellScript "init-template" ''
             set -e
 
