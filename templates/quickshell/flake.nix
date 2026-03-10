@@ -1,14 +1,9 @@
 {
-  description = "A very basic flake";
+  description = "Basic quickshell project with hello-world sample app.";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-
-    quickshell = {
-      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = inputs @ {flake-parts, ...}:
@@ -20,10 +15,6 @@
         ...
       }: {
         imports = [];
-        flake = {
-        };
-
-        flake = {};
 
         systems = ["x86_64-linux"];
 
@@ -33,23 +24,34 @@
           system,
           ...
         }: let
-          quickshell = inputs.quickshell.packages.${system}.default;
+          mkQuickShell = opts:
+            pkgs.stdenv.mkDerivation {
+              inherit (opts) name src;
+
+              nativeBuildInputs = [pkgs.qt6.wrapQtAppsHook];
+              buildInputs = [pkgs.quickshell pkgs.qt6.qtbase];
+
+              installPhase = ''
+                runHook preInstall
+
+                mkdir -p $out/share/${opts.name}
+                cp -r . $out/share/${opts.name}/
+
+                makeWrapper ${pkgs.quickshell}/bin/quickshell $out/bin/${opts.name} \
+                  --prefix QML2_IMPORT_PATH : "$out/share/${opts.name}" \
+                  --add-flags "--path $out/share/${opts.name}/shell.qml"
+
+                runHook postInstall
+              '';
+            };
         in {
-          packages.default = pkgs.stdenv.mkDerivation {
-            pname = "quickshell-hello-world";
-            version = "1.0";
+          packages.default = mkQuickShell {
+            name = "quickshell-hello-world";
             src = ./hello-world;
+          };
 
-            nativeBuildInputs = [pkgs.qt6.wrapQtAppsHook];
-            buildInputs = [quickshell pkgs.qt6.qtbase];
-
-            installPhase = ''
-              mkdir -p $out/share/hello-world
-              cp shell.qml $out/share/hello-world
-
-              makeWrapper ${quickshell}/bin/quickshell $out/bin/quickshell-hello-world \
-                --add-flags "--path $out/share/hello-world/shell.qml"
-            '';
+          devShells.default = pkgs.mkShell {
+            packages = [pkgs.quickshell];
           };
         };
       }
