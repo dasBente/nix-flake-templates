@@ -1,0 +1,22 @@
+# Jupyter
+.ipynb_checkpoints/
+*_checkpoint.ipynb
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Nix / direnv
+.direnv/
+
+# OS
+.DS_Store
+Thumbs.db
